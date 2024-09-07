@@ -68,7 +68,7 @@ function stripecheckout_link($params)
 	$amount = ceil($params['amount'] * 100.00);
 	$setcurrency = $params['currency'];
 	if ($params['StripeCurrency']) {
-	    $exchange = exchange($params['currency'], strtoupper($params['StripeCurrency']));
+	    $exchange = stripecheckout_exchange($params['currency'], strtoupper($params['StripeCurrency']));
 	    if (!$exchange) {
 	        return '<div class="alert alert-danger text-center" role="alert">支付汇率错误，请联系客服进行处理</div>';
 	    }
@@ -132,7 +132,7 @@ function stripecheckout_refund($params)
         );
     }
 }
-function exchange($from, $to)
+function stripecheckout_exchange($from, $to)
 {
     try {
         $url = 'https://raw.githubusercontent.com/DyAxy/ExchangeRatesTable/main/data.json';
