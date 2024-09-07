@@ -1,0 +1,24 @@
+{
+  "schema": "1.0",
+  "type": "whmcs-gateways",
+  "name": "stripecheckout",
+  "license": "MIT",
+  "category": "payments",
+  "description": {
+    "name": "Stripe Checkout",
+      "tagline": "A popular secure tokenised multi-gateway merchant solution."
+  },
+  "logo": {
+    "filename": "logo.png"
+  },
+  "support": {
+    "homepage": "https:\/\/www.stripe.com\/",
+    "docs_url": "https:\/\/docs.stripe.com\/development"
+  },
+  "authors": [
+    {
+      "name": "Anonymous",
+      "homepage": "https:\/\/www.whmcs.com\/"
+    }
+  ]
+}
