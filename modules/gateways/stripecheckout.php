@@ -1,5 +1,5 @@
 <?php
-session_start();
+
 use Stripe\StripeClient;
 
 if (!defined("WHMCS")) {
