@@ -33,12 +33,15 @@ function stripecheckout_config($params)
             'FriendlyName' => 'Webhook 密钥[必设置]',
             'Type' => 'text',
             'Size' => 30,
-            'Description' => '填写从Stripe获取到的Webhook密钥签名',
+            'Description' => "填写从Stripe获取到的Webhook密钥签名<br> <div class='alert alert-success' role='alert' style='margin-bottom: 0px;'>Webhook设置 <a href='https://dashboard.stripe.com/webhooks' target='_blank'><span class='glyphicon glyphicon-new-window'></span> Stripe webhooks</a> 侦听的事件:checkout.session.completed和checkout.session.async_payment_succeeded  <br>
+	    Stripe webhook " .$params['systemurl']."modules/gateways/stripecheckout/webhooks.php
+               </div><style>* {font-family: Microsoft YaHei Light , Microsoft YaHei}</style><select style='display:none'>",
 	),
         'StripeCurrency' => array(
-            'FriendlyName' => '发起交易货币[可留空]',
+            'FriendlyName' => '发起交易货币[默认CNY]',
             'Type' => 'text',
             'Size' => 30,
+	    "Default" => "CNY",
             'Description' => '默认获取WHMCS的货币，与您设置的发起交易货币进行汇率转换，再使用转换后的价格和货币向Stripe请求',
         ),
         'RefundFixed' => array(
@@ -53,9 +56,7 @@ function stripecheckout_config($params)
             'Type' => 'text',
             'Size' => 30,
             'Default' => '0.00',
-	    'Description' => "% <br><br> <div class='alert alert-success' role='alert' style='margin-bottom: 0px;'>Webhook设置 <a href='https://dashboard.stripe.com/webhooks' target='_blank'><span class='glyphicon glyphicon-new-window'></span> Stripe webhooks</a> 侦听的事件:checkout.session.completed和checkout.session.async_payment_succeeded  <br>
-	    Stripe webhook " .$params['systemurl']."modules/gateways/stripecheckout/webhooks.php
-               </div><style>* {font-family: Microsoft YaHei Light , Microsoft YaHei}</style><select style='display:none'>"
+	    'Description' => "%"
         ),
     );
 }
