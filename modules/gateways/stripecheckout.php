@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 use Stripe\StripeClient;
 
 if (!defined("WHMCS")) {
@@ -30,7 +30,7 @@ function stripecheckout_config($params)
             'Description' => '填写从Stripe获取到的密钥（SK_LIVE）',
         ),
         'StripeWebhookKey' => array(
-            'FriendlyName' => 'Webhook 密钥',
+            'FriendlyName' => 'Webhook 密钥[必设置]',
             'Type' => 'text',
             'Size' => 30,
             'Description' => '填写从Stripe获取到的Webhook密钥签名',
