@@ -65,16 +65,19 @@ function stripecheckout_link($params)
     global $_LANG;
     try {
         $stripe = new Stripe\StripeClient($params['StripeSkLive']);
+	$originalAmount = isset($params['basecurrencyamount']) ? $params['basecurrencyamount'] : $params['amount']; //解决Convert To For Processing后出现入账金额不对问题
+	$StripeCurrency = empty($params['StripeCurrency']) ? "CNY" : $params['StripeCurrency']
 	$amount = ceil($params['amount'] * 100.00);
 	$setcurrency = $params['currency'];
-	if ($params['StripeCurrency']) {
-	    $exchange = stripecheckout_exchange($params['currency'], strtoupper($params['StripeCurrency']));
+	$return_url = $params['systemurl'] . 'viewinvoice.php?paymentsuccess=true&id=' . $params['invoiceid'];
+      if ($StripeCurrency !=  $setcurrency ) {
+	    $exchange = stripecheckout_exchange($strtoupper($StripeCurrency), $setcurrency );
 	    if (!$exchange) {
 	        return '<div class="alert alert-danger text-center" role="alert">支付汇率错误，请联系客服进行处理</div>';
 	    }
-	$amount = floor($params['amount'] * $exchange * 100.00);
-	$setcurrency = $params['StripeCurrency'];
-}
+		$amount = floor($params['amount'] * $exchange * 100.00);
+		$setcurrency = $StripeCurrency;
+	}
 
         $checkout = $stripe->checkout->sessions->create([
             'customer_email' => $params['clientdetails']['email'],
@@ -90,10 +93,10 @@ function stripecheckout_link($params)
             ],
             'metadata' => [
                 'invoice_id' => $params['invoiceid'],
-                'original_amount' => $params['amount']
+                'original_amount' => $originalAmount,
             ],
         'mode' => 'payment',
-            'success_url' => $params['systemurl'] . 'viewinvoice.php?paymentsuccess=true&id=' . $params['invoiceid'],
+            'success_url' => $return_url,
         ]);
     } catch (Exception $e) {
         return '<div class="alert alert-danger text-center" role="alert">' .  $_LANG['expressCheckoutError']  . $e.'</div>';
