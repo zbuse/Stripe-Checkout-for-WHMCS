@@ -127,7 +127,7 @@ if ( $checkout->payment_status == 'paid' || $checkout->status == 'complete') {
         $fee = $balanceTransaction->fee / 100.00;	
     	$usercurrency = getCurrency($params['clientdetails']['userid']);  //获取用户货币
         if ( strtoupper($usercurrency['code']) != strtoupper($balanceTransaction->currency )) {
-        $feeexchange = stripealipay_exchange(strtoupper($balanceTransaction->currency) , $usercurrency['code'] );
+        $feeexchange = stripecheckout_exchange(strtoupper($balanceTransaction->currency) , $usercurrency['code'] );
         $fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
 }
             logTransaction($paymentmethod, $paymentIntent , 'stripecheckout: return successful');
