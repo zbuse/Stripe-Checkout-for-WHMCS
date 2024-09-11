@@ -75,7 +75,7 @@ function stripecheckout_link($params)
   	$sessionKey = $paymentmethod . $params['invoiceid'] . round($originalAmount);  // 将金额一并写入防止变动不能请求新的支付
 	    
       if ($StripeCurrency !=  $setcurrency ) {
-	  $exchange = stripealipay_exchange( strtoupper($setcurrency) , strtoupper($StripeCurrency) );
+	  $exchange = stripecheckout_exchange( strtoupper($setcurrency) , strtoupper($StripeCurrency) );
       if (!$exchange) {
           return '<div class="alert alert-danger text-center" role="alert">支付汇率错误，请联系客服进行处理</div>';
       }
