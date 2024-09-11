@@ -1,5 +1,5 @@
 <?php
-
+session_start();
 use Stripe\StripeClient;
 
 if (!defined("WHMCS")) {
@@ -67,21 +67,23 @@ function stripecheckout_link($params)
     try {
         $stripe = new Stripe\StripeClient($params['StripeSkLive']);
 	$originalAmount = isset($params['basecurrencyamount']) ? $params['basecurrencyamount'] : $params['amount']; //解决Convert To For Processing后出现入账金额不对问题
-	$StripeCurrency = empty($params['StripeCurrency']) ? "CNY" : $params['StripeCurrency']
+	$StripeCurrency = empty($params['StripeCurrency']) ? "CNY" : $params['StripeCurrency'];
 	$amount = ceil($params['amount'] * 100.00);
 	$setcurrency = $params['currency'];
 	$return_url = $params['systemurl'] . 'viewinvoice.php?paymentsuccess=true&id=' . $params['invoiceid'];
+  	$paymentmethod = $params['paymentmethod'];
+  	$sessionKey = $paymentmethod . $params['invoiceid'] . round($originalAmount);  // 将金额一并写入防止变动不能请求新的支付
+	    
       if ($StripeCurrency !=  $setcurrency ) {
-	    $exchange = stripecheckout_exchange( strtoupper($setcurrency) , strtoupper($StripeCurrency));
-	    if (!$exchange) {
-	        return '<div class="alert alert-danger text-center" role="alert">支付汇率错误，请联系客服进行处理</div>';
-	    }
-		$amount = floor($params['amount'] * $exchange * 100.00);
-		$setcurrency = $StripeCurrency;
-	}
+	  $exchange = stripealipay_exchange( strtoupper($setcurrency) , strtoupper($StripeCurrency) );
+      if (!$exchange) {
+          return '<div class="alert alert-danger text-center" role="alert">支付汇率错误，请联系客服进行处理</div>';
+      }
+      $setcurrency = $StripeCurrency;
+      $amount = floor($params['amount'] * $exchange * 100.00);
+      }
 
-        $checkout = $stripe->checkout->sessions->create([
-            'customer_email' => $params['clientdetails']['email'],
+$postfiled = ['customer_email' => $params['clientdetails']['email'],
             'line_items' => [
                 [
                     'price_data' => [
@@ -98,13 +100,42 @@ function stripecheckout_link($params)
             ],
         'mode' => 'payment',
             'success_url' => $return_url,
-        ]);
+        ];
+if (isset($_SESSION[$sessionKey])) {
+     $checkoutId = $_SESSION[$sessionKey];
+     $checkout = $stripe->checkout->sessions->retrieve($checkoutId,[]);
+}else {
+       $checkout = $stripe->checkout->sessions->create($postfiled);
+       $_SESSION[$sessionKey] = $checkout->id; 
+}
+	    
     } catch (Exception $e) {
         return '<div class="alert alert-danger text-center" role="alert">' .  $_LANG['expressCheckoutError']  . $e.'</div>';
     }
     if ($checkout->payment_status == 'unpaid') {
         return '<form action="' . $checkout['url'] . '" method="get"><input type="submit" class="btn btn-primary" value="' . $params['langpaynow'] . '" /></form>';
     }
+     //跳转回来直接判断入账
+if ( $checkout->payment_status == 'paid' || $checkout->status == 'complete') {
+        $paymentId = $checkout->payment_intent;
+	checkCbTransID($paymentId);
+
+        //Get Transactions fee
+        $paymentIntent = $stripe->paymentIntents->retrieve($paymentId, []);
+        $charge = $stripe->charges->retrieve($paymentIntent->latest_charge, []);
+        $balanceTransaction = $stripe->balanceTransactions->retrieve($charge->balance_transaction, []);
+        $fee = $balanceTransaction->fee / 100.00;	
+    	$usercurrency = getCurrency($params['clientdetails']['userid']);  //获取用户货币
+        if ( strtoupper($usercurrency['code']) != strtoupper($balanceTransaction->currency )) {
+        $feeexchange = stripealipay_exchange(strtoupper($balanceTransaction->currency) , $usercurrency['code'] );
+        $fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
+}
+            logTransaction($paymentmethod, $paymentIntent , 'stripecheckout: return successful');
+            addInvoicePayment( $params['invoiceid'] ,$paymentId, $checkout['metadata']['original_amount'] , $fee, $paymentmethod);
+            header("Refresh: 0; url=$return_url");
+	    return $paymentIntent->status;
+}
+	
     return '<div class="alert alert-danger text-center" role="alert">'. $_LANG['expressCheckoutError'] .'</div>';
 }
 
