@@ -46,7 +46,7 @@ try {
         if ($checkoutsessions['payment_status'] == 'paid' && $checkoutsessions['status'] == 'complete') {
             $invoiceId = checkCbInvoiceID($checkoutsessions['metadata']['invoice_id'], $paymentmethod);
             $paymentId = $session->payment_intent;
-			checkCbTransID($transId);
+	checkCbTransID($paymentId);
 
         //Get Transactions fee
         $paymentIntent = $stripe->paymentIntents->retrieve($checkoutsessions->payment_intent, []);
@@ -57,7 +57,7 @@ try {
 		$currency = getCurrency( $invoice->userid ); //获取用户使用货币信息
 		
 if ( strtoupper($currency['code'])  != strtoupper($balanceTransaction->currency )) {
-        $feeexchange = stripecheckout_exchange_exchange($currency['code'], strtoupper($balanceTransaction->currency ));
+        $feeexchange = stripecheckout_exchange_exchange(strtoupper($balanceTransaction->currency),$currency['code']);
         $fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
 }
             logTransaction($paymentmethod, checkoutsessions , 'stripecheckout: Callback successful');
