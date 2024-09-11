@@ -61,7 +61,7 @@ if ( strtoupper($currency['code'])  != strtoupper($balanceTransaction->currency 
         $fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
 }
             logTransaction($paymentmethod, checkoutsessions , 'stripecheckout: Callback successful');
-            addInvoicePayment( $invoiceId,$paymentId,$invoice->total, $fee, $paymentmethod);
+            addInvoicePayment( $invoiceId,$paymentId, $checkoutsessions['metadata']['original_amount'] , $fee, $paymentmethod);
             echo json_encode( ['status'=>$checkoutsessions->payment_status] );
             http_response_code(200);
         } else {
