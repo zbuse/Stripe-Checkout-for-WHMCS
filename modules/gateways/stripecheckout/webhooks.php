@@ -77,6 +77,3 @@ if ( strtoupper($currency['code'])  != strtoupper($balanceTransaction->currency 
 }
 
 
-
-        $sessionId = 'cs_test_a1DpI8tq3omqgfKmeq4D114R74nidGoxO3mzPdxYhWCk7sAzMK6fqsNyJP;
-        $session = $stripe->checkout->sessions->retrieve($sessionId,[]);
