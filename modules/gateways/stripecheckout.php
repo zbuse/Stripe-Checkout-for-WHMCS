@@ -108,10 +108,6 @@ if (isset($_SESSION[$sessionKey])) {
        $checkout = $stripe->checkout->sessions->create($postfiled);
        $_SESSION[$sessionKey] = $checkout->id; 
 }
-	    
-    } catch (Exception $e) {
-        return '<div class="alert alert-danger text-center" role="alert">' .  $_LANG['expressCheckoutError']  . $e.'</div>';
-    }
     if ($checkout->payment_status == 'unpaid') {
         return '<form action="' . $checkout['url'] . '" method="get"><input type="submit" class="btn btn-primary" value="' . $params['langpaynow'] . '" /></form>';
     }
@@ -119,7 +115,6 @@ if (isset($_SESSION[$sessionKey])) {
 if ( $checkout->payment_status == 'paid' || $checkout->status == 'complete') {
         $paymentId = $checkout->payment_intent;
 	checkCbTransID($paymentId);
-
         //Get Transactions fee
         $paymentIntent = $stripe->paymentIntents->retrieve($paymentId, []);
         $charge = $stripe->charges->retrieve($paymentIntent->latest_charge, []);
@@ -134,8 +129,10 @@ if ( $checkout->payment_status == 'paid' || $checkout->status == 'complete') {
             addInvoicePayment( $params['invoiceid'] ,$paymentId, $checkout['metadata']['original_amount'] , $fee, $paymentmethod);
             header("Refresh: 0; url=$return_url");
 	    return $paymentIntent->status;
-}
-	
+}	    
+    } catch (Exception $e) {
+        return '<div class="alert alert-danger text-center" role="alert">' .  $_LANG['expressCheckoutError']  . $e.'</div>';
+    }
     return '<div class="alert alert-danger text-center" role="alert">'. $_LANG['expressCheckoutError'] .'</div>';
 }
 
