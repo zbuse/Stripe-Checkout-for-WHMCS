@@ -19,38 +19,56 @@ if (!isset($_SERVER['HTTP_STRIPE_SIGNATURE'])) {
     die($_LANG['errors']['badRequest']);
 }
 
+function exchange($from, $to) {
+    try {
+        $url = 'https://raw.githubusercontent.com/DyAxy/ExchangeRatesTable/main/data.json';
+        $result = file_get_contents($url, false);
+        $result = json_decode($result, true);
+        return $result['rates'][strtoupper($to)] / $result['rates'][strtoupper($from)];
+    }
+    catch (Exception $e) {
+        echo "Exchange error: " . $e->getMessage;
+        return "Exchange error: " . $e->getMessage;
+    }
+}
+
 $payload = @file_get_contents('php://input');
 $sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'];
 $event = null;
 
 try {
-    $event = Webhook::constructEvent(
-        $payload, $sig_header, $gatewayParams['StripeWebhookKey']
-    );
-} catch(\UnexpectedValueException $e) {
-    logTransaction($paymentmethod, $e, 'stripecheckout: Invalid payload');
+    $event = null;
+        $event = Webhook::constructEvent( @file_get_contents('php://input') ,  $_SERVER['HTTP_STRIPE_SIGNATURE'] , $gatewayParams['StripeWebhookKey']);
+        $paymentId = $event->data->object->id;
+        $status = $event->type;
+}
+catch(\UnexpectedValueException $e) {
+    logTransaction($gatewayName, $e, $gatewayName.': Invalid payload');
+    echo "Invalid payload";
     http_response_code(400);
     exit();
-} catch(\Stripe\Exception\SignatureVerificationException $e) {
-    logTransaction($paymentmethod, $e, 'stripecheckout: Invalid signature');
+}
+catch(Stripe\Exception\SignatureVerificationException $e) {
+    logTransaction($gatewayName, $e, $gatewayName.': Invalid signature');
+    echo "Invalid signature";
     http_response_code(400);
     exit();
 }
 
 try {
     $fee = 0;
-    if ($event->type == 'checkout.session.completed') {
+      if ( $event->payment_status == 'paid' || $event->status == 'complete') {
         $stripe = new StripeClient($gatewayParams['StripeSkLive']);
         $checkoutId = $event->data->object->id;
         $checkout = $stripe->checkout->sessions->retrieve($checkoutId,[]);
-		
-        if ( $checkout->payment_status == 'paid' || $checkout->status == 'complete') {
-            $invoiceId = checkCbInvoiceID($checkout['metadata']['invoice_id'], $paymentmethod);
-            $paymentId = $checkout->payment_intent;
-		checkCbTransID($paymentId);
+        $invoiceId = checkCbInvoiceID($checkout['metadata']['invoice_id'], $paymentmethod);
+        $paymentId = $checkout->payment_intent;
+	$paymentIntent = $stripe->paymentIntents->retrieve($paymentId, []);
+	//验证回传信息避免多个站点的webhook混乱，返回状态错误。
+	if (strpos( $checkout['description'] , $gatewayParams['companyname'] ) !== false) {  die("nothing to do"); }   
+	checkCbTransID($paymentId);
 
         //Get Transactions fee
-        $paymentIntent = $stripe->paymentIntents->retrieve($checkout->payment_intent, []);
         $charge = $stripe->charges->retrieve($paymentIntent->latest_charge, []);
         $balanceTransaction = $stripe->balanceTransactions->retrieve($charge->balance_transaction, []);
         $fee = $balanceTransaction->fee / 100.00;
@@ -58,7 +76,7 @@ try {
 		$currency = getCurrency( $invoice->userid ); //获取用户使用货币信息
 		
 if ( strtoupper($currency['code'])  != strtoupper($balanceTransaction->currency )) {
-        $feeexchange = stripecheckout_exchange_exchange(strtoupper($balanceTransaction->currency),$currency['code']);
+        $feeexchange = exchange(strtoupper($balanceTransaction->currency),$currency['code']);
         $fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
 }
             logTransaction($paymentmethod, $checkout , 'stripecheckout: Callback successful');
@@ -67,9 +85,9 @@ if ( strtoupper($currency['code'])  != strtoupper($balanceTransaction->currency 
             http_response_code(200);
         } else {
             echo json_encode( ['status'=>$checkout->payment_status] );
-			http_response_code(400);
-		}
-    }
+	    http_response_code(400);
+	}
+ 
         
 } catch (Exception $e) {
     logTransaction($paymentmethod, $e, 'error-callback');
