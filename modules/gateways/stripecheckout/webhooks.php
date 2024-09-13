@@ -32,14 +32,11 @@ function exchange($from, $to) {
     }
 }
 
-$payload = @file_get_contents('php://input');
-$sig_header = $_SERVER['HTTP_STRIPE_SIGNATURE'];
-$event = null;
 
 try {
     $event = null;
         $event = Webhook::constructEvent( @file_get_contents('php://input') ,  $_SERVER['HTTP_STRIPE_SIGNATURE'] , $gatewayParams['StripeWebhookKey']);
-        $paymentId = $event->data->object->id;
+        $checkoutId = $event->data->object->id;
         $status = $event->type;
 }
 catch(\UnexpectedValueException $e) {
@@ -59,7 +56,6 @@ try {
     $fee = 0;
       if ( $event->payment_status == 'paid' || $event->status == 'complete') {
         $stripe = new StripeClient($gatewayParams['StripeSkLive']);
-        $checkoutId = $event->data->object->id;
         $checkout = $stripe->checkout->sessions->retrieve($checkoutId,[]);
         $invoiceId = checkCbInvoiceID($checkout['metadata']['invoice_id'], $paymentmethod);
         $paymentId = $checkout->payment_intent;
