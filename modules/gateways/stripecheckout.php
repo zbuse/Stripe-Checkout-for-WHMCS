@@ -97,6 +97,7 @@ $postfiled = ['customer_email' => $params['clientdetails']['email'],
             'metadata' => [
                 'invoice_id' => $params['invoiceid'],
                 'original_amount' => $originalAmount,
+	        'description' => $params['companyname'],
             ],
         'mode' => 'payment',
             'success_url' => $return_url,
