@@ -93,6 +93,7 @@ function stripecheckout_link($params) {
 				        'metadata' => [
 				                    'invoice_id' => $params['invoiceid'],
 				                    'original_amount' => $originalAmount
+						    'description' => $params['companyname'],
 				                ],
 				            ];
 		//将paymentIntentId存入 session 避免多次创建交易请求
