@@ -68,7 +68,7 @@ try {
         $charge = $stripe->charges->retrieve($paymentIntent->latest_charge, []);
         $balanceTransaction = $stripe->balanceTransactions->retrieve($charge->balance_transaction, []);
         $fee = $balanceTransaction->fee / 100.00;
-		$invoice = Capsule::table('tblinvoices')->where('id', $invoiceid)->first();  //获取账单信息和用户 id
+		$invoice = Capsule::table('tblinvoices')->where('id', $invoiceId)->first();  //获取账单信息和用户 id
 		$currency = getCurrency( $invoice->userid ); //获取用户使用货币信息
 		
 if ( strtoupper($currency['code'])  != strtoupper($balanceTransaction->currency )) {
