@@ -107,6 +107,24 @@ function stripecheckout_link($params) {
 			$paymentIntent = $stripe->paymentIntents->confirm($paymentIntent->id);
 		}
 		$client_secret = $paymentIntent->client_secret;
+	//跳转回来直接判断入账
+	if ($paymentIntent->status == 'succeeded') {
+		checkCbTransID($paymentIntent->id);
+		//Get Transactions fee
+		$charge = $stripe->charges->retrieve($paymentIntent->latest_charge, []);
+		$balanceTransaction = $stripe->balanceTransactions->retrieve($charge->balance_transaction, []);
+		$fee = $balanceTransaction->fee / 100.00;
+		$userCurrency = getCurrency($params['clientdetails']['userid'])['code'];
+	if ( strtoupper($userCurrency) != strtoupper($balanceTransaction->currency )) {
+			$feeexchange = stripealipay_exchange(strtoupper($balanceTransaction->currency) ,  isset($params['basecurrency']) ? $params['basecurrency'] : $userCurrency );
+			$fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
+		}
+		logTransaction($paymentmethod, $paymentIntent, $params['name'] .': return successful');
+		addInvoicePayment($params['invoiceid'], $paymentIntent->id ,$paymentIntent['metadata']['original_amount'],$fee,$params['paymentmethod']);
+		header("Refresh: 0; url=$return_url");
+		return $paymentIntent->status;
+	}
+		
 		if ($paymentIntent->status != 'succeeded') {
 			return '
      <script src="https://js.stripe.com/v3/"></script>
@@ -190,22 +208,7 @@ function setLoading(isLoading) {
 	catch (Exception $e) {
 		return '<div class="alert alert-danger text-center" role="alert">支付网关错误，请联系客服进行处理'. $e->getMessage() .'</div>';
 	}
-	//跳转回来直接判断入账
-	if ($paymentIntent->status == 'succeeded') {
-		checkCbTransID($paymentIntent->id);
-		//Get Transactions fee
-		$charge = $stripe->charges->retrieve($paymentIntent->latest_charge, []);
-		$balanceTransaction = $stripe->balanceTransactions->retrieve($charge->balance_transaction, []);
-		$fee = $balanceTransaction->fee / 100.00;
-		if ( strtoupper($setcurrency) != strtoupper($balanceTransaction->currency )) {
-			$feeexchange = stripecheckout_exchange(strtoupper($balanceTransaction->currency) ,  isset($params['basecurrency']) ? $params['basecurrency'] : $setcurrency  );
-			$fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
-		}
-		logTransaction($paymentmethod, $paymentIntent, $params['name'] .': return successful');
-		addInvoicePayment($params['invoiceid'], $paymentIntent->id ,$paymentIntent['metadata']['original_amount'],$fee,$params['name']);
-		header("Refresh: 0; url=$return_url");
-		return $paymentIntent->status;
-	}
+	
 	return '<div class="alert alert-danger text-center" role="alert">'. $_LANG['expressCheckoutError'] .'</div>';
 }
 function stripecheckout_refund($params) {
