@@ -84,7 +84,7 @@ try ( $status == 'payment_intent.succeeded' || $status == 'succeeded' ) {
         $fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
     }
     logTransaction($gatewayName, $paymentIntent, $gatewayName.': Callback successful');
-    addInvoicePayment($invoiceId, $paymentId,$paymentIntent['metadata']['original_amount'],$fee,$gatewayName);
+    addInvoicePayment($invoiceId, $paymentId,$paymentIntent['metadata']['original_amount'],$fee,$gatewayParams['paymentmethod']);
     return json_encode(['status' => $status ]);
 }
 catch (Exception $e) {
