@@ -16,6 +16,20 @@ if (!$gatewayParams['type']) {
 if (!isset($_SERVER['HTTP_STRIPE_SIGNATURE'])) {
 	die("错误请求");
 }
+
+function exchange($from, $to) {
+	try {
+		$url = 'https://raw.githubusercontent.com/DyAxy/ExchangeRatesTable/main/data.json';
+		$result = file_get_contents($url, false);
+		$result = json_decode($result, true);
+		return $result['rates'][strtoupper($to)] / $result['rates'][strtoupper($from)];
+	}
+	catch (Exception $e) {
+		echo "Exchange error: " . $e->getMessage;
+		return "Exchange error: " . $e->getMessage;
+	}
+}
+
 try {
     $event = null;
     if (isset($_POST['check'])) {
