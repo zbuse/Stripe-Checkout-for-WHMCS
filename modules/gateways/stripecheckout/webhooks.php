@@ -53,7 +53,7 @@ catch(Stripe\Exception\SignatureVerificationException $e) {
 }
 
 try {
-    $fee = 0;
+      $fee = 0;
       if ( $event->type == 'checkout.session.completed') {
         $stripe = new StripeClient($gatewayParams['StripeSkLive']);
         $checkout = $stripe->checkout->sessions->retrieve($checkoutId,[]);
@@ -80,7 +80,7 @@ if ( strtoupper($currency['code'])  != strtoupper($balanceTransaction->currency 
             echo json_encode( ['status'=>$checkout->payment_status] );
             http_response_code(200);
         } else {
-            echo json_encode( ['status'=>$checkout->payment_status] );
+            echo json_encode( ['status'=>'null'] );
 	    http_response_code(400);
 	}
  
