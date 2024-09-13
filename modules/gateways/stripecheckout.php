@@ -126,8 +126,11 @@ if ( $checkout->payment_status == 'paid' || $checkout->status == 'complete') {
         $feeexchange = stripecheckout_exchange(strtoupper($balanceTransaction->currency) , $usercurrency['code'] );
         $fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
 }
-            logTransaction($paymentmethod, $paymentIntent , 'stripecheckout: return successful');
-            addInvoicePayment( $params['invoiceid'] ,$paymentId, $checkout['metadata']['original_amount'] , $fee, $paymentmethod);
+	
+            logTransaction($paymentmethod, $paymentIntent, $params['name'] .': return successful');
+            addInvoicePayment($params['invoiceid'], $paymentIntent->id ,$paymentIntent['metadata']['original_amount'],$fee,$params['paymentmethod']);
+
+	
             header("Refresh: 0; url=$return_url");
 	    return $paymentIntent->status;
 }	    
