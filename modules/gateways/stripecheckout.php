@@ -193,7 +193,6 @@ function setLoading(isLoading) {
 	}
 	//跳转回来直接判断入账
 	if ($paymentIntent->status == 'succeeded') {
-		$invoiceId = checkCbInvoiceID($paymentIntent['metadata']['invoice_id'], $paymentmethod );
 		checkCbTransID($paymentIntent->id);
 		//Get Transactions fee
 		$charge = $stripe->charges->retrieve($paymentIntent->latest_charge, []);
