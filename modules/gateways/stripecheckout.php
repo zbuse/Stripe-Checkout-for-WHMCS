@@ -106,7 +106,6 @@ function stripecheckout_link($params) {
 		if ($paymentIntent->status == 'requires_confirmation') {
 			$paymentIntent = $stripe->paymentIntents->confirm($paymentIntent->id);
 		}
-		//	print_r($paymentIntent);
 		$client_secret = $paymentIntent->client_secret;
 		if ($paymentIntent->status != 'succeeded') {
 			return '
