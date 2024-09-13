@@ -54,7 +54,7 @@ catch(Stripe\Exception\SignatureVerificationException $e) {
 
 try {
     $fee = 0;
-      if ( $event->payment_status == 'paid' || $event->status == 'complete') {
+      if ( $event->type == 'checkout.session.completed') {
         $stripe = new StripeClient($gatewayParams['StripeSkLive']);
         $checkout = $stripe->checkout->sessions->retrieve($checkoutId,[]);
         $invoiceId = checkCbInvoiceID($checkout['metadata']['invoice_id'], $paymentmethod);
