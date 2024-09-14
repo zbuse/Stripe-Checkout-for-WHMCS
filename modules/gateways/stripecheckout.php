@@ -67,7 +67,6 @@ function stripecheckout_link($params) {
 	$StripeCurrency = empty($params['StripeCurrency']) ? "CNY" : $params['StripeCurrency'];
 	$amount = ceil($params['amount'] * 100.00);
 	$setcurrency = $params['currency'];
-	$StripeMethodType = explode(',', $params['Stripemethod']);
 	$stripe = new Stripe\StripeClient($params['StripeSkLive']);
 	$return_url = $params['systemurl'] . 'viewinvoice.php?paymentsuccess=true&id=' . $params['invoiceid'];
 	$paymentmethod = $params['paymentmethod'];
@@ -83,21 +82,21 @@ function stripecheckout_link($params) {
 	}
 	try {
 		$paymentIntent = null;
-		$paymentIntentParams = [
-				        'amount' => $amount,
-				        'currency' => $setcurrency ,
-				        'payment_method_types' => ['card','alipay','wechat_pay',],
-				        'payment_method_types' =>$StripeMethodType ,
-					'payment_method_options' => ['card' => ['request_three_d_secure' => 'automatic',],'wechat_pay' => ['client' => 'web',]],
-				        'description' => $params['companyname'] . $_LANG['invoicenumber'] . $params['invoiceid'],
-			        	'confirm' => true,
-				        'metadata' => [
-				                    'invoice_id' => $params['invoiceid'],
-				                    'original_amount' => $originalAmount
-						    'description' => $params['companyname'],
-				                ],
-				            ];
-		//将paymentIntentId存入 session 避免多次创建交易请求
+    $paymentIntentParams = [
+        'amount' => $amount,
+        'currency' => $setcurrency ,
+        'payment_method_types' => ['card','alipay','wechat_pay',],
+        'payment_method_options' => ['card' => ['request_three_d_secure' => 'automatic',],'wechat_pay' => ['client' => 'web',]],
+        'description' => $params['companyname'] . $_LANG['invoicenumber'] . $params['invoiceid'],
+        'confirm' => true,
+        'metadata' => [
+          'invoice_id' => $params['invoiceid'],
+          'original_amount' => $originalAmount,
+          'description' => $params['companyname'],
+           ],
+          ];
+
+	//将paymentIntentId存入 session 避免多次创建交易请求
 		if (isset($_SESSION[$sessionKey])) {
 			$paymentIntentId = $_SESSION[$sessionKey];
 			$paymentIntent = $stripe->paymentIntents->retrieve($paymentIntentId);
@@ -112,21 +111,24 @@ function stripecheckout_link($params) {
 	//跳转回来直接判断入账
 	if ($paymentIntent->status == 'succeeded') {
 		checkCbTransID($paymentIntent->id);
+		$invoiceid = checkCbInvoiceID($paymentIntent['metadata']['invoice_id'], $gatewayName);
 		//Get Transactions fee
 		$charge = $stripe->charges->retrieve($paymentIntent->latest_charge, []);
 		$balanceTransaction = $stripe->balanceTransactions->retrieve($charge->balance_transaction, []);
-		$fee = $balanceTransaction->fee / 100.00;
-		$userCurrency = getCurrency($params['clientdetails']['userid'])['code'];
-	if ( strtoupper($userCurrency) != strtoupper($balanceTransaction->currency )) {
-			$feeexchange = stripealipay_exchange(strtoupper($balanceTransaction->currency) ,  isset($params['basecurrency']) ? $params['basecurrency'] : $userCurrency );
-			$fee = floor($balanceTransaction->fee * $feeexchange / 100.00);
+                $feecurrency = strtoupper($balanceTransaction->currency );
+                $Transfee = $balanceTransaction->fee ;
+		$fee = $Transfee / 100.00;
+		$userCurrency = strtoupper(getCurrency($params['clientdetails']['userid'])['code']);
+		if (  $userCurrency != $feecurrency ) {
+		$feeexchange = stripecheckout_exchange( $feecurrency , $userCurrency );
+		$fee = floor($Transfee * $feeexchange / 100.00);
 		}
 		logTransaction($paymentmethod, $paymentIntent, $params['name'] .': return successful');
 		addInvoicePayment($params['invoiceid'], $paymentIntent->id ,$paymentIntent['metadata']['original_amount'],$fee,$params['paymentmethod']);
 		header("Refresh: 0; url=$return_url");
 		return $paymentIntent->status;
 	}
-		
+
 		if ($paymentIntent->status != 'succeeded') {
 			return '
      <script src="https://js.stripe.com/v3/"></script>
@@ -210,7 +212,7 @@ function setLoading(isLoading) {
 	catch (Exception $e) {
 		return '<div class="alert alert-danger text-center" role="alert">支付网关错误，请联系客服进行处理'. $e->getMessage() .'</div>';
 	}
-	
+
 	return '<div class="alert alert-danger text-center" role="alert">'. $_LANG['expressCheckoutError'] .'</div>';
 }
 function stripecheckout_refund($params) {
