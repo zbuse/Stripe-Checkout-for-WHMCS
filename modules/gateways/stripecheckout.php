@@ -131,7 +131,7 @@ function stripecheckout_link($params) {
 		if ($paymentIntent->status != 'succeeded') {
 			return '
     <style>
-        .floating-form {
+            #payment-form {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -142,42 +142,46 @@ function stripecheckout_link($params) {
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px;
+            display: none;
         }
     </style>
-     <script src="https://js.stripe.com/v3/"></script>
-    <form id="payment-form">
-      <div id="payment-element" class="mb-3">
-<!--Stripe.js injects the Payment Element-->
-      </div>
-      <button id="submit"  class="btn btn-success">
-        <div class="spinner hidden" id="spinner"></div>
+    <script src="https://js.stripe.com/v3/"></script>
+    <button id="show-form" class="btn btn-primary">'.$params["langpaynow"].'</button>
+    <form id="payment-form" class="mb-3">
+        <div id="payment-element" class="mb-3">
+            <!--Stripe.js injects the Payment Element-->
+        </div>
+        <button id="submit" class="btn btn-success">
+            <div class="spinner hidden" id="spinner"></div>
         <span id="button-text">'.$params["langpaynow"].'</span>
-      </button>
-      <div id="payment-message" class="hidden"></div>
+        </button>
+        <div id="payment-message" class="hidden"></div>
     </form>
-<script>
+    <script>
 const stripe = Stripe("'.$params['StripePkLive'].'");
 const clientSecret = "'.$client_secret.'";
 const return_url= "'.$return_url.'";
-let elements;
-        document.querySelector("#submit").addEventListener("click", function(event) {
-            event.preventDefault(); // 防止表单提交
-            $("#payment-form").addClass("floating-form"); // 添加悬浮类
+        let elements;
+
+        document.querySelector("#show-form").addEventListener("click", function(event) {
+            event.preventDefault(); // 防止默认行为
             initialize();
+            document.querySelector("#payment-form").style.display = "block";
         });
 
         function initialize() {
             elements = stripe.elements({ clientSecret });
             const paymentElementOptions = {
-
-                size: "desktop",
-                //size: "mobile",
-                //layout: "tabs",
-                //layout: "accordion",
+                floating: {
+                    alignment: "center",
+                },
+                floating: true,
+                defaultCollapsed: false,
+                size: "mobile",
+                layout: "tabs",
             };
             const paymentElement = elements.create("payment", paymentElementOptions);
             paymentElement.mount("#payment-element");
-            // 绑定表单提交事件
             document.querySelector("#payment-form").addEventListener("submit", handleSubmit);
         }
 async function handleSubmit(e) {
