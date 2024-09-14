@@ -153,7 +153,7 @@ function stripecheckout_link($params) {
         </div>
         <button id="submit" class="btn btn-success">
             <div class="spinner hidden" id="spinner"></div>
-        <span id="button-text">'.$params["langpaynow"].'</span>
+        <span id="button-text">'.$_LANG["confirmAndPay"].'</span>
         </button>
         <div id="payment-message" class="hidden"></div>
     </form>
