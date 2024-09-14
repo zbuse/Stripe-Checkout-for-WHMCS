@@ -88,7 +88,6 @@ function stripecheckout_link($params) {
         'payment_method_types' => ['card','alipay','wechat_pay',],
         'payment_method_options' => ['card' => ['request_three_d_secure' => 'automatic',],'wechat_pay' => ['client' => 'web',]],
         'description' => $params['companyname'] . $_LANG['invoicenumber'] . $params['invoiceid'],
-        'confirm' => true,
         'metadata' => [
           'invoice_id' => $params['invoiceid'],
           'original_amount' => $originalAmount,
