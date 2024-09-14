@@ -130,6 +130,20 @@ function stripecheckout_link($params) {
 
 		if ($paymentIntent->status != 'succeeded') {
 			return '
+    <style>
+        .floating-form {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width:500px;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background-color: floralwhite;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px;
+        }
+    </style>
      <script src="https://js.stripe.com/v3/"></script>
     <form id="payment-form">
       <div id="payment-element" class="mb-3">
@@ -146,24 +160,26 @@ const stripe = Stripe("'.$params['StripePkLive'].'");
 const clientSecret = "'.$client_secret.'";
 const return_url= "'.$return_url.'";
 let elements;
-initialize();
-document
-  .querySelector("#payment-form")
-  .addEventListener("submit", handleSubmit);
-function initialize() {
-  elements = stripe.elements({ clientSecret });
-     const paymentElementOptions = {
-       floating: {
-         alignment: "center",
-       },  floating: true,
- defaultCollapsed: false,
-size : "mobile",
-       layout: "tabs",
-//      layout: "accordion",
-};
-  const paymentElement = elements.create("payment", paymentElementOptions);
-    paymentElement.mount("#payment-element");
-}
+        document.querySelector("#submit").addEventListener("click", function(event) {
+            event.preventDefault(); // 防止表单提交
+            $("#payment-form").addClass("floating-form"); // 添加悬浮类
+            initialize();
+        });
+
+        function initialize() {
+            elements = stripe.elements({ clientSecret });
+            const paymentElementOptions = {
+
+                size: "desktop",
+                //size: "mobile",
+                //layout: "tabs",
+                //layout: "accordion",
+            };
+            const paymentElement = elements.create("payment", paymentElementOptions);
+            paymentElement.mount("#payment-element");
+            // 绑定表单提交事件
+            document.querySelector("#payment-form").addEventListener("submit", handleSubmit);
+        }
 async function handleSubmit(e) {
   e.preventDefault();
   setLoading(true);
