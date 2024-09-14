@@ -94,6 +94,7 @@ $postfiled = ['customer_email' => $params['clientdetails']['email'],
                     'quantity' => 1
                 ],
             ],
+	    'description' => $params['companyname'] . $_LANG['invoicenumber'] . $params['invoiceid'],
             'metadata' => [
                 'invoice_id' => $params['invoiceid'],
                 'original_amount' => $originalAmount,
